@@ -18,14 +18,14 @@
     "throws an exception if the transform definition is invalid"
     nil) ; TODO
 
-(defn data-definition [data]
-    "throws an exception if the input data definition is invalid"
-    (map datum-definition data))
-
 (defn datum-definition [datum]
     "throws an exception if the input datum definition is invalid"
     nil) ; TODO
 
+(defn data-definition [data]
+    "throws an exception if the input data definition is invalid"
+    (map datum-definition data))
+
 (defn data-compatibility [data]
     "throws an exception if the input data is incompatible"
-    nil)
+    nil) ; TODO

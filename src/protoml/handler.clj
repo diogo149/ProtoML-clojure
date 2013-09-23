@@ -25,10 +25,8 @@
         (validate/transform-definition transform)
         (validate/type-check transform data)
         (validate/transform-parameters transform parameters)
-        (io/process-transform transform-id transform-name data-namespace parameters data)
-        ; call
-        ; write data spec
-        ; log results in elastic search
+        (io/process-transform transform-id transform-name transform data-namespace parameters data)
+        ; TODO log results in elastic search
         "Success"))
 
 
