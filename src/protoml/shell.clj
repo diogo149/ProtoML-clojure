@@ -5,16 +5,21 @@
 (ns protoml.shell
   (:use compojure.core
             [clojure.java.shell :only [sh]]
-            [clojure.tools.logging :only (info error)]))
+            [clojure.tools.logging :only (info)])
+  (:require [protoml.utils :as utils]))
 
-(defn check-sh [& arguments]
+(defn unsafe-sh [& arguments]
     "calls input arguments as a shell command, and throws an exception if the command fails"
-    (apply info (concat ["Shell Calling: "] arguments))
+    (info (apply str (concat ["Shell Calling: "] arguments)))
     (let [output (apply sh arguments)
         return-code (output :exit)]
         (info "Shell Output: " output)
         (if (= return-code 0) output
             (throw (Exception. (apply str (concat ["Error calling: "] (interpose " " arguments) [" Stderr: " (output :err)])))))))
+
+(defn check-sh [& arguments]
+    "calls input arguments as a shell command, and returns in the form [val error]"
+    (apply utils/exception-to-error (conj arguments unsafe-sh)))
 
 (defn mkdir-p [directory-path]
     "makes a directory and it's parents, input should be a directory"
@@ -31,11 +36,6 @@
                 to-arg (fn [v] (str "--" param "=" v))]
                 (if (coll? value) (recur T (concat acc (map to-arg value)))
                     (recur T (conj acc (to-arg value))))))))
-
-(defn call-transform [transform-path parameters input-paths output-paths model-path train-mode random-seed]
-    "calls the transform file to perform the transform"
-    (let [input-map (merge parameters {:input input-paths :output output-paths :model model-path :trainmode train-mode :seed random-seed})]
-        (generic-call transform-path input-map)))
 
 (defn make-read-only [filename]
     "changes file permissions of input file to be read only"

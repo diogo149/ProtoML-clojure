@@ -1,10 +1,10 @@
 (ns protoml.handler
-  (:use compojure.core
-    [clojure.tools.logging :only (info error)])
+  (:use compojure.core)
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
             [protoml.validate :as validate]
-            [protoml.io :as io]))
+            [protoml.io :as io]
+            [protoml.utils :as utils]))
 
 (defn summary []
     "displays a summary of ongoing processes"
@@ -12,27 +12,28 @@
 
 (defn new-transform [request]
     "process a request for a new transform"
-    (info "New Request: " request)
-    (validate/request-fields request)
-    (let [transform-id (io/get-transform-id request)
-        data (io/read-data request)
-        transform (io/read-transform request)
-        parameters (io/read-parameters request)
-        data-namespace (request :DataNamespace)
-        transform-name (request :TransformName)]
-        (validate/data-definition data)
-        (validate/data-compatibility data)
-        (validate/transform-definition transform)
-        (validate/type-check transform data)
-        (validate/transform-parameters transform parameters)
-        (io/process-transform transform-id transform-name transform data-namespace parameters data)
+    (utils/log-err->> request
+        validate/request-fields
+        io/get-transform-id
+        io/read-data
+        io/read-transform
+        io/read-parameters
+        io/read-random-seed
+        validate/data-definition
+        validate/data-compatibility
+        validate/transform-definition
+        validate/type-check
+        validate/transform-parameters
+        validate/no-nil
+        io/process-transform
+        io/make-output-immutable
+        io/write-output-definition
         ; TODO log results in elastic search
-        "Success"))
-
+        ))
 
 (defroutes app-routes
   (GET "/summary" [] (summary))
-  (POST "/new-transform" [& request] (io/catch-all new-transform request))
+  (POST "/new-transform" [& request] (apply str (new-transform request))) ; TODO convert to json
   (route/resources "/")
   (route/not-found "Not Found"))
 

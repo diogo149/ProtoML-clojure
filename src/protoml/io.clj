@@ -34,7 +34,7 @@
 (defn from-json [s] (json/read-str s :value-fn json-value-reader :key-fn keyword))
 
 (def CONFIG-FILE "ProtoML_config.json")
-(def CONFIG (try (from-json (slurp CONFIG-FILE)) (catch Exception e {}))) ; defaults to empty map if file is not found
+(def CONFIG (try (from-json (slurp CONFIG-FILE)) (catch Throwable e {}))) ; defaults to empty map if file is not found
 (def train-namespace (CONFIG :TrainNamespace "train"))
 (def root-directory (CONFIG :RootDir "."))
 (def hadoop-mode (CONFIG :HadoopMode false))
@@ -43,15 +43,6 @@
 
 (def data-folder (path-join root-directory "data"))
 (def transform-folder (path-join root-directory "transform"))
-
-(defn catch-all [func & args]
-    "performs func where all exceptions are caught"
-    (try
-        (apply func args)
-        (catch Throwable e
-          (let [st (with-out-str (stacktrace/print-stack-trace e))]
-            (error st)
-            (to-json {:message (.getMessage e) :stacktrace st})))))
 
 (defn parent-directory [transform-id]
   "get the directory for a specific transform"
@@ -63,13 +54,13 @@
         directory))
 
 (defn get-transform-id [request]
-  "get transform id from hashing input request, and create the needed directory"
+  "get transform id from hashing input request, and create the needed directory; returns [request error]"
   (let [transform-id (md5 (str (apply sorted-map request)))
       directory (parent-directory transform-id)]
-    (when (.exists (clojure.java.io/file directory))
-      (throw (Exception. "Transform already exists or hash collision")))
-    (shell/mkdir-p directory)
-    transform-id))
+      (if (.exists (clojure.java.io/file directory)) [nil "Transform already exists or hash collision"]
+        (let [[_ err] (shell/mkdir-p directory)]
+          (if (nil? err) [(assoc request :transform-id transform-id) nil]
+                         [nil err])))))
 
 (defn extract-parent-id [datum-id]
   "recovers the id of the parent transform and the index of datum"
@@ -88,8 +79,9 @@
 
 (defn read-data [request]
   "locate and read data definitions from data folder"
-  (let [data-ids (request :Data)]
-    (map read-datum data-ids)))
+  (let [data-ids (request :Data)
+         data (map read-datum data-ids)]
+        [(assoc request :data data) nil]))
 
 (defn read-transform [request]
   "read transform definition from json file"
@@ -100,8 +92,15 @@
 
 (defn read-parameters [request]
   "read parameters from json string"
-  (let [parameter-str (request :JsonParameters)]
-    (from-json parameter-str)))
+  (let [parameter-str (request :JsonParameters)
+        parameters (from-json parameter-str)]
+        [(assoc request :parameters parameters) nil]))
+
+(defn read-random-seed [request]
+   "read random seed, if available, else generate one"
+   (let [transform-id (request :transform-id)
+        random-seed (get request :RandomSeed (hash transform-id))]
+      [(assoc request :random-seed random-seed) nil]))
 
 (defn train-mode? [data-namespace]
   "determines whether or not a namespace is for training"
@@ -111,32 +110,40 @@
   "creates the paths for the output of a transform"
   (for [i (range output-num)] (path-join directory (str (to-datum-id transform-id i) data-extension))))
 
-(defn process-transform [transform-id transform-name transform data-namespace parameters data]
+(defn call-transform [transform-path parameters input-paths output-paths model-path train-mode random-seed]
+    "calls the transform file to perform the transform"
+    (let [input-map (merge parameters {:input input-paths :output output-paths :model model-path :trainmode train-mode :seed random-seed})]
+        (shell/generic-call transform-path input-map)))
+
+(defn process-transform [request]
   "process the data into a transform and make the necessary calls"
-  (let [train-mode (train-mode? data-namespace)
+  (let [transform-id (request :transform-id)
+        transform-name (request :TransformName)
+        transform (request :transform)
+        data-namespace (request :DataNamespace)
+        parameters (request :parameters)
+        data (request :data)
+        train-mode (train-mode? data-namespace)
         transform-path (path-join transform-folder transform-name)
         output-num (count (transform :output))
         input-paths (map :full-path data)
         directory (parent-directory transform-id)
         output-paths (to-output-paths directory transform-id output-num)
         model-path (path-join directory (str transform-id model-extension))
-        random-seed (hash transform-id)]
-    (info "transform-id: " transform-id)
-    (info "transform-name: " transform-name)
-    (info "transform: " transform)
-    (info "data-namespace: " data-namespace)
-    (info "parameters: " parameters)
-    (info "data: " data)
-    (info "train-mode: " train-mode)
-    (info "transform-path: " transform-path)
-    (info "output-num: " output-num)
-    (info "input-paths: " input-paths)
-    (info "directory: " directory)
-    (info "output-paths: " output-paths)
-    (info "model-path: " model-path)
-    (info "random-seed: " random-seed)
-    ; (shell/call-transform transform-path parameters input-paths output-paths model-path train-mode random-seed)
-    ; check return code, and exception if not 0
-    (shell/make-read-only (conj output-paths model-path))
-    ; write output data jsons
-    ))
+        random-seed (request :random-seed)]
+    (call-transform transform-path parameters input-paths output-paths model-path train-mode random-seed)
+    )) ; TODO add creation of these to another node in the pipeline
+
+(defn make-output-immutable [request]
+  "makes the output of a transform immutable (read only)"
+  (let [model-path (request :model-path)
+        output-paths (request :output-paths)]
+        (utils/combine-errors request (map shell/make-read-only (conj output-paths model-path)))))
+
+(defn write-output-definition [request]
+  "writes the json files for the output data"
+  (let [output-paths (request :output-paths)
+        transform (request :transform)
+        output-def (transform :Output)
+        directory (request :directory)])
+  [request nil])

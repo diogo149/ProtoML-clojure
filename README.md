@@ -5,5 +5,6 @@ clojure implementation of ProtoML's ideas - for fun!
 
 General TODOs
 =============
-* more tests
-* more logging
+* tests
+* fill in sample files
+* make transforms
