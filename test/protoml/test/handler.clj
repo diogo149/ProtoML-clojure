@@ -4,10 +4,10 @@
         protoml.handler))
 
 (deftest test-app
-  (testing "main route"
+  (testing "tutorial route"
     (let [response (app (request :get "/"))]
-      (is (= (:status response) 404))
-      (is (= (:body response) "Not Found"))))
+      (is (= (:status response) 200))
+      (is (= (:body response) (tutorial)))))
 
   (testing "not-found route"
     (let [response (app (request :get "/invalid"))]

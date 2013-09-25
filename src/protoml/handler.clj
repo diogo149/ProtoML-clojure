@@ -4,36 +4,49 @@
             [compojure.route :as route]
             [protoml.validate :as validate]
             [protoml.io :as io]
+            [protoml.parse :as parse]
             [protoml.utils :as utils]))
 
+(defn tutorial []
+  "display a tutorial of how to use ProtoML"
+  "TODO: tutorial")
+
 (defn summary []
-    "displays a summary of ongoing processes"
-    "") ; keep statistics to display
+  "displays a summary of ongoing processes"
+  "") ; TODO keep statistics to display
 
 (defn new-transform [request]
-    "process a request for a new transform"
-    (utils/log-err->> request
-        validate/request-fields
-        io/get-transform-id
-        io/read-data
-        io/read-transform
-        io/read-parameters
-        io/read-random-seed
-        validate/data-definition
-        validate/data-compatibility
-        validate/transform-definition
-        validate/type-check
-        validate/transform-parameters
-        validate/no-nil
-        io/process-transform
-        io/make-output-immutable
-        io/write-output-definition
-        ; TODO log results in elastic search
-        ))
+  "process a request for a new transform"
+  (utils/log-err->> request
+                    validate/request-fields
+                    parse/parse-request
+                    io/generate-transform-id
+                    io/generate-directory
+                    io/create-directory
+                    ; check point (:
+                    ; utils/debug-request
+                    io/read-data
+                    ; utils/debug-request
+                    io/read-transform
+                    io/read-parameters
+                    io/read-random-seed
+                    validate/data-definition
+                    validate/data-compatibility
+                    validate/transform-definition
+                    validate/type-check
+                    validate/transform-parameters
+                    validate/no-nil
+                    io/process-transform
+                    io/make-output-immutable
+                    io/write-output-definition
+                    ; TODO log results in elastic search
+                    ))
 
 (defroutes app-routes
+  (GET "/" [] (tutorial))
   (GET "/summary" [] (summary))
   (POST "/new-transform" [& request] (apply str (new-transform request))) ; TODO convert to json
+  (POST "/echo" [& request] (println "request: " request) (str request))
   (route/resources "/")
   (route/not-found "Not Found"))
 

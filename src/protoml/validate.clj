@@ -1,5 +1,6 @@
 (ns protoml.validate
-  (:use compojure.core))
+  (:use compojure.core
+        [clojure.contrib.map-utils :only [safe-get]]))
 
 (defn request-fields [request]
     "if the request for a new transform is invalid, returns an error"
@@ -8,22 +9,22 @@
 
 (defn type-check [request]
     "if the request has incompatible types for transform and input, returns an error"
-    (let [transform (request :transform)
-        data (request :data)]
+    (let [transform (safe-get request :transform)
+        data (safe-get request :data)]
         ; TODO
         [request nil]))
 
 (defn transform-parameters [request]
     "if the request has incompatible parameters for the transform, returns an error"
-    (let [transform (request :transform)
-        parameters (request :parameters)]
+    (let [transform (safe-get request :transform)
+        parameters (safe-get request :parameters)]
         ; TODO check values and also that the names aren't the reserved names (input output trainmode model)
         [request nil]
         ))
 
 (defn transform-definition [request]
     "if the transform definition is invalid, returns an error"
-    (let [transform (request :transform)]
+    (let [transform (safe-get request :transform)]
         ; TODO
         [request nil]
         ))
@@ -34,13 +35,13 @@
 
 (defn data-definition [request]
     "if the input data definition is invalid, returns an error"
-    (let [data (request :data)]
+    (let [data (safe-get request :data)]
         (if (every? true? (map datum-definition data)) [request nil]
             [nil "Invalid input data definition"])))
 
 (defn data-compatibility [request]
     "if the input data is incompatible, returns an error"
-    (let [data (request :data)]
+    (let [data (safe-get request :data)]
         (if (apply = (map :NRows data)) [request nil]
             [nil "Incompatible data"])))
 
@@ -49,8 +50,3 @@
     (let [values (map second input-map)]
         (if (some nil? values) [nil "Input map has nil values."]
         [input-map nil])))
-
-(defn has-necessities [request]
-    "validates that a request has all the necessary fields to perform create the transform"
-    (if (every? #(contains? request %) [:TransformName :DataNamespace :JsonParameters :Data :Tags]) [request nil] ; TODO
-        [nil "Missing parameters in transform request"]))

@@ -4,9 +4,11 @@
   :license {:name "Apache License Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :dependencies [[org.clojure/clojure "1.5.1"]
+                 [org.clojure/clojure-contrib "1.2.0"]
                  [org.clojure/data.json "0.2.3"]
                  [org.clojure/tools.logging "0.2.6"]
                  [compojure "1.1.5"]
+                 ; [ring-json-params "0.1.3"]
                  [digest "1.4.3"]]
   :plugins [[lein-ring "0.8.5"]]
   :ring {:handler protoml.handler/app}
