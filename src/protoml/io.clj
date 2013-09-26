@@ -10,6 +10,7 @@
 
 (def data-extension ".pml-data")
 (def model-extension ".pml-model")
+(def transform-extension ".json")
 
 (defn path-join [& args]
   "joins path arguments into a single string"
@@ -66,25 +67,41 @@
   "creates a datum id from a parent id and index"
   (str parent-id "--" index))
 
-(defn read-datum [datum-id]
+(defn generate-data-parent-ids [request]
+  "add parent ids for the data to a request object"
+  (let [data-ids (safe-get request :Data)
+        parents-and-indices (map extract-parent-id data-ids)
+        lengths (map count parents-and-indices)]
+    (if (some #(not= 2 %) lengths) [nil "Improper data ids"]
+      [(assoc request :parent-ids (map first parents-and-indices)) nil])))
+
+(defn safe-open-json [filename]
+  "open and load a json file, or return an error if an exception occurs"
+  (utils/exception-to-error #(parse/from-json (slurp %)) filename))
+
+(defn read-datum [directory parent-id]
   "locate and read datum's information into a map"
-  (let [parent-id (first (extract-parent-id datum-id))
-        directory (parent-directory parent-id)
-        data-file (path-join directory (str datum-id data-extension))]
-    (parse/from-json (slurp data-file))))
+  (let [data-file (path-join directory (str parent-id data-extension))]
+    (safe-open-json data-file)))
 
 (defn read-data [request]
   "locate and read data definitions from data folder"
-  (let [data-ids (safe-get request :Data)
-        data (map read-datum data-ids)]
-    [(assoc request :data data) nil]))
+  (let [parent-ids (safe-get request :parent-ids)
+        directory (safe-get request :directory)
+        data-with-errors (map (partial read-datum directory) parent-ids)
+        final-error (apply (partial utils/combine-errors nil) data-with-errors)
+        data (map first data-with-errors)]
+    (if (nil? (second final-error)) [(assoc request :data data) nil]
+       final-error)))
 
 (defn read-transform [request]
   "read transform definition from json file"
   (let [transform-name (safe-get request :TransformName)
-        filename (str transform-name ".json")
-        full-path (path-join transform-folder filename)]
-    (parse/from-json (slurp full-path)))) ; TODO recursive transform look up (for templates
+        transform-file (str transform-name transform-extension)
+        full-path (path-join transform-folder transform-file)
+        [transform error] (safe-open-json full-path)]
+    (if (nil? error) [(assoc request :transform transform)]
+      [nil error]))) ; TODO recursive transform look up (for templates
 
 (defn read-parameters [request]
   "read parameters from json string"

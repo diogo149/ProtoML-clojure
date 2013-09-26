@@ -2,15 +2,32 @@
   (:use clojure.test
         protoml.io))
 
+(def md5-1 "99914b932bd37a50b983c5e7c90ae93b")
+(def md5-2 "3fba38625fe2c5345bb68671cea9d91e")
+(def md5-3 "e1105186c6ef6b7aaa4af46a71973f26")
+
+(def md5s [md5-1 md5-2 md5-3])
+
+; TODO create sample requests to use
+
+(deftest test-path-join
+  (testing "samples"
+    (is (= (path-join "doo/" "/poo") "doo/poo"))
+    (is (= (path-join "/doo/" "/poo") "/doo/poo"))
+    (is (= (path-join "./doo/" "/poo") "./doo/poo"))
+    (is (= (path-join "./doo/" "/poo/" "/foo/" "/goo/") "./doo/poo/foo/goo/"))
+
+    ))
+
 (deftest test-generate-transform-id
   (testing "md5 hashes"
     (is (= (generate-transform-id {})
-           [{:transform-id "99914b932bd37a50b983c5e7c90ae93b"} nil]))
+           [{:transform-id md5-1} nil]))
     (is (= (generate-transform-id {:doo "doo"})
-           [{:doo "doo" :transform-id "3fba38625fe2c5345bb68671cea9d91e"} nil]))
+           [{:doo "doo" :transform-id md5-2} nil]))
     ; be careful with flatten, since that may remove empty collections
     (is (= (generate-transform-id {:doo []})
-           [{:doo [] :transform-id "e1105186c6ef6b7aaa4af46a71973f26"} nil]))
+           [{:doo [] :transform-id md5-3} nil]))
     ))
 
 (deftest test-extract-parent-id
@@ -33,3 +50,28 @@
     (is (= (extract-parent-id "d00--1") []))
     ))
 
+(deftest test-to-datum-id
+  (testing "with input from extract-parent-id"
+    (doall
+      (for [md5-x md5s index (map str (range 10))]
+        (is (= (extract-parent-id (to-datum-id md5-x index)) [md5-x index]))))))
+
+(deftest test-generate-data-parent-ids
+  (testing "proper data ids"
+    ; TODO
+    )
+  (testing "improper data ids"
+    ; TODO
+    ))
+
+(deftest test-safe-open-json
+  (testing "invalid file"
+    (is (nil? (first (safe-open-json "fake-filenane"))))
+    (is (= (-> (safe-open-json "fake-filenane")
+               second
+               class)
+           java.lang.String))
+    )
+  (testing "valid file"
+    ; TODO
+    ))

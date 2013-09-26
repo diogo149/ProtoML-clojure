@@ -20,15 +20,17 @@
   (utils/log-err->> request
                     validate/request-fields
                     parse/parse-request
+                    validate/request-types
                     io/generate-transform-id
                     io/generate-directory
                     io/create-directory
+                    io/generate-data-parent-ids
+                    io/read-data
+                    io/read-transform
                     ; check point (:
                     ; utils/debug-request
-                    io/read-data
-                    ; utils/debug-request
-                    io/read-transform
                     io/read-parameters
+                    ; utils/debug-request
                     io/read-random-seed
                     validate/data-definition
                     validate/data-compatibility

@@ -63,6 +63,10 @@
         (error st)
         [nil (.getMessage e)]))))
 
+(defn no-errors? [results]
+  "returns whether or not there are any errors in a collection of [value error] pairs"
+  (every? nil? (map second results)))
+
 (defn combine-errors [value & results]
   "takes in a collection of [val error] pairs and returns a default value if there are no errors, else returns an error"
   (let [errors (map second results)]
