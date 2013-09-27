@@ -1,7 +1,8 @@
 (ns protoml.parse
   (:use compojure.core
         [clojure.contrib.map-utils :only [safe-get]])
-  (:require [clojure.data.json :as json]))
+  (:require [clojure.data.json :as json]
+            [protoml.utils :as utils]))
 
 (defn json-value-reader [key value]
   ; (if (= key :date)
@@ -20,6 +21,14 @@
 (defn to-json [m] (json/write-str m :value-fn json-value-writer :key-fn name))
 
 (defn from-json [s] (json/read-str s :value-fn json-value-reader :key-fn keyword))
+
+(defn safe-to-json [m]
+  "tries to convert map to json, and returns an error if this fails"
+  (utils/exception-to-error to-json m))
+
+(defn safe-from-json [m]
+  "tries to convert string to map, and returns an error if this fails"
+  (utils/exception-to-error from-json m))
 
 (defn parse-rest [value]
   "tries to parse an input string as json"

@@ -1,0 +1,7 @@
+{
+    "RootDir": ".",
+    "TrainNamespace": "train",
+    "HadoopMode": false,
+    "DirectoryDepth": 1,
+    "CharsPerDirectoryLevel": 1
+}

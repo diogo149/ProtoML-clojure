@@ -27,10 +27,7 @@
                     io/generate-data-parent-ids
                     io/read-data
                     io/read-transform
-                    ; check point (:
-                    ; utils/debug-request
                     io/read-parameters
-                    ; utils/debug-request
                     io/read-random-seed
                     validate/data-definition
                     validate/data-compatibility
@@ -38,6 +35,10 @@
                     validate/type-check
                     validate/transform-parameters
                     validate/no-nil
+                    utils/return-error
+                    ; utils/debug-request
+                    ; utils/debug-request
+                    ; check point (:
                     io/process-transform
                     io/make-output-immutable
                     io/write-output-definition

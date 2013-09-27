@@ -86,3 +86,7 @@
              (println))))
   (flush)
   [request nil])
+
+(defn return-error [& args]
+  "always returns an error, useful for short-circuiting"
+  [nil "return-error called!"])

@@ -1,6 +1,7 @@
 (ns protoml.test.io
   (:use clojure.test
-        protoml.io))
+        protoml.io
+        protoml.test.test-utils))
 
 (def md5-1 "99914b932bd37a50b983c5e7c90ae93b")
 (def md5-2 "3fba38625fe2c5345bb68671cea9d91e")
@@ -66,12 +67,19 @@
 
 (deftest test-safe-open-json
   (testing "invalid file"
-    (is (nil? (first (safe-open-json "fake-filenane"))))
-    (is (= (-> (safe-open-json "fake-filenane")
-               second
-               class)
-           java.lang.String))
+    (test-error (safe-open-json "fake-filename"))
     )
   (testing "valid file"
     ; TODO
+    ))
+
+(deftest test-safe-slurp
+  (testing "invalid file"
+    (test-error (safe-slurp "fake-filename"))
+    (test-error (safe-slurp {}))
+    (test-error (safe-slurp []))
+    )
+  (testing "valid file"
+    (is (= (test-non-error (safe-slurp "README.md"))
+           (slurp "README.md")))
     ))

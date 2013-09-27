@@ -3,9 +3,13 @@ ProtoML-clojure
 
 clojure implementation of ProtoML's ideas - for fun!
 
-For testing:
-    cd sample
-    curl -XPOST localhost:3000/new-transform -d @sample-request.txt
+For testing server:
+    $ cd sample
+    $ lein ring server
+
+For testing client:
+    $ cd sample
+    $ curl -XPOST localhost:3000/new-transform -d @sample-request.txt
 
 General TODOs
 =============

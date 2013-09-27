@@ -45,8 +45,10 @@
 
 (defn data-compatibility [request]
   "if the input data is incompatible, returns an error"
-  (let [data (safe-get request :data)]
-    (if (apply = (map :NRows data)) [request nil]
+  (let [data (safe-get request :data)
+        rows (map #(safe-get % :NRows) data)
+        zero-rows (= 0 (count rows))]
+    (if (or zero-rows (apply = (map :NRows data))) [request nil]
       [nil "Incompatible data"])))
 
 (defn no-nil [input-map]

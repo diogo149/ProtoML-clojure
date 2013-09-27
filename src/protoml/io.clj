@@ -16,6 +16,10 @@
   "joins path arguments into a single string"
   (clojure.string/replace (apply str (interpose "/" args)) #"/+" "/"))
 
+(defn safe-slurp [filename]
+  "tries to slurp, and if this fails, returns an error"
+  (utils/exception-to-error slurp filename))
+
 (def CONFIG-FILE "ProtoML_config.json")
 (def CONFIG (try (parse/from-json (slurp CONFIG-FILE)) (catch Throwable e {}))) ; defaults to empty map if file is not found
 (def train-namespace (CONFIG :TrainNamespace "train"))
@@ -37,7 +41,7 @@
                           md5)]
     [(assoc request :transform-id transform-id) nil]))
 
-(defn parent-directory [transform-id] ; TODO make sure nothing else calls thing other than generate-directory
+(defn parent-directory [transform-id]
   "get the directory for a specific transform"
   (let [hashed (md5 transform-id)
         partitioned (partition chars-per-directory-level hashed)
@@ -92,7 +96,7 @@
         final-error (apply (partial utils/combine-errors nil) data-with-errors)
         data (map first data-with-errors)]
     (if (nil? (second final-error)) [(assoc request :data data) nil]
-       final-error)))
+      final-error)))
 
 (defn read-transform [request]
   "read transform definition from json file"
@@ -105,8 +109,7 @@
 
 (defn read-parameters [request]
   "read parameters from json string"
-  (let [parameter-str (safe-get request :JsonParameters)
-        parameters (parse/from-json parameter-str)]
+  (let [parameters (safe-get request :JsonParameters)]
     [(assoc request :parameters parameters) nil]))
 
 (defn read-random-seed [request]
@@ -140,7 +143,7 @@
         transform-path (path-join transform-folder transform-name)
         output-num (count (transform :output))
         input-paths (map :full-path data)
-        directory (parent-directory transform-id)
+        directory (safe-get request :directory)
         output-paths (to-output-paths directory transform-id output-num)
         model-path (path-join directory (str transform-id model-extension))
         random-seed (safe-get request :random-seed)]

@@ -1,6 +1,7 @@
 (ns protoml.test.utils
   (:use clojure.test
-        protoml.utils))
+        protoml.utils
+        protoml.test.test-utils))
 
 (def error-text "this is an error")
 
@@ -54,4 +55,10 @@
     (is (= (->> (concat (repeat 10 [0 nil]) [["doo" "foo"]])
                 (apply (partial combine-errors 149)))
            [nil "foo"]))
+    ))
+
+(deftest test-return-error
+  (testing "always returns error"
+    (test-error (return-error))
+    (test-error (return-error "doo"))
     ))
