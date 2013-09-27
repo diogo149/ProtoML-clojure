@@ -18,32 +18,49 @@
 (defn new-transform [request]
   "process a request for a new transform"
   (utils/log-err->> request
+                    ; request pre-processing
                     validate/request-fields
                     parse/parse-request
                     validate/request-types
+                    ; transform
+                    io/read-transform
+                    validate/transform-definition
+                    ; input data
+                    io/generate-data-parent-ids
+                    io/generate-parent-directories
+                    validate/input-directories
+                    io/generate-input-prefixes
+                    io/generate-input-definitions
+                    validate/input-definitions
+                    io/generate-input-extensions
+                    io/generate-input-paths
+                    utils/debug-request
+                    utils/return-error
+                    validate/input-paths
+                    io/read-data
+                    validate/data-definition
+                    validate/data-compatibility
+                    ; transform parameters
+                    io/read-parameters
+                    validate/transform-parameters
+                    ; data-transform compatibility
+                    validate/type-check
+                    ; output
                     io/generate-transform-id
                     io/generate-directory
                     io/create-directory
-                    io/generate-data-parent-ids
-                    io/read-data
-                    io/read-transform
-                    io/read-parameters
+                    io/generate-output-paths
                     io/read-random-seed
-                    validate/data-definition
-                    validate/data-compatibility
-                    validate/transform-definition
-                    validate/type-check
-                    validate/transform-parameters
+                    ; performing the operation
                     validate/no-nil
+                    validate/new-transform-types
                     utils/return-error
-                    ; utils/debug-request
-                    ; utils/debug-request
-                    ; check point (:
+                    ; check point
                     io/process-transform
+                    ; post-processing
                     io/make-output-immutable
                     io/write-output-definition
-                    ; TODO log results in elastic search
-                    ))
+                    )) ; TODO log results/errors in elastic search
 
 (defroutes app-routes
   (GET "/" [] (tutorial))

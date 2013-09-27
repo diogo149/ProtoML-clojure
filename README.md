@@ -21,3 +21,6 @@ General TODOs
 Notes
 =====
 *Items in a request cannot contain an ampersand (&).
+
+generate output prefixes as well
+make file formatter first class

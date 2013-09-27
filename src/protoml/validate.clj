@@ -56,3 +56,28 @@
   (let [values (map second input-map)]
     (if (some nil? values) [nil "Input map has nil values."]
       [input-map nil])))
+
+(defn new-transform-types [request]
+  "if the types of the data for a new transform are invalid, returns an error"
+  ; TODO
+  [request nil])
+
+(defn input-directories [request]
+  "validate that all input data directories exist"
+  ; TODO
+  [request nil])
+
+(defn input-definitions [request]
+  "validate that all input data definitions exist"
+  ; TODO
+  [request nil])
+
+(defn input-definitions [request]
+  "validate that all the data extensions are valid (at least one per data)"
+  ; TODO
+  [request nil])
+
+(defn input-paths [request]
+  "validate that all input data paths exist"
+  ; TODO
+  [request nil])

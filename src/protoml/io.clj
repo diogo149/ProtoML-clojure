@@ -6,7 +6,8 @@
   (:require [clojure.stacktrace :as stacktrace]
             [protoml.shell :as shell]
             [protoml.parse :as parse]
-            [protoml.utils :as utils]))
+            [protoml.utils :as utils]
+            [me.raynes.fs :as fs]))
 
 (def data-extension ".pml-data")
 (def model-extension ".pml-model")
@@ -72,12 +73,63 @@
   (str parent-id "--" index))
 
 (defn generate-data-parent-ids [request]
-  "add parent ids for the data to a request object"
+  "add parent ids for the data to a request"
   (let [data-ids (safe-get request :Data)
         parents-and-indices (map extract-parent-id data-ids)
         lengths (map count parents-and-indices)]
     (if (some #(not= 2 %) lengths) [nil "Improper data ids"]
       [(assoc request :parent-ids (map first parents-and-indices)) nil])))
+
+(defn generate-parent-directories [request]
+  "add the directories of the input data to the request"
+  (let [parent-ids (safe-get request :parent-ids)
+        parent-directories (map parent-directory parent-ids)]
+    [(assoc request :parent-directories parent-directories) nil]))
+
+(defn generate-input-prefixes [request]
+  "add the path prefixes (paths without an extension) of the input data to a request"
+  (let [parent-directories (safe-get request :parent-directories)
+        data-ids (safe-get request :Data)
+        zipped (map vector parent-directories data-ids)
+        input-prefixes (map #(apply path-join %) zipped)]
+    [(assoc request :input-prefixes input-prefixes) nil]))
+
+(defn generate-input-definitions [request]
+  "add the paths to the data definition files of the input data to a request"
+  (let [input-prefixes (safe-get request :input-prefixes)
+        input-definitions (map #(str % data-extension) input-prefixes)]
+    [(assoc request :input-definitions input-definitions) nil]))
+
+(defn extract-data-extensions [directory data-id]
+  "returns a collection of extensions available for a certain data-id"
+  (let [files (fs/list-dir directory)]
+    (if (nil? files) (throw (Exception. "Invalid directory to extract data extensions from"))
+      (let [pattern-str (str "^" data-id "(\\..*)$")
+        pattern (re-pattern pattern-str)
+        mapped (map #(re-find pattern %) files)
+        matches (filter (complement nil?) mapped)
+        extensions (map second matches)
+        data-extensions (filter #(not= % data-extension))]
+        data-extensions))))
+
+(defn generate-input-extensions [request]
+  "add the available extensions for each input data to the request"
+  (let [data-ids (safe-get request :Data)
+        parent-directories (safe-get request :parent-directories)
+        zipped (map vector parent-directories data-ids)
+        data-extensions (map #(apply extract-data-extensions %) zipped)]
+    [(assoc request :data-extensions data-extensions) nil]
+    ))
+
+(defn generate-input-paths [request]
+  "add the paths of the data files of the input data to a request"
+  (let [input-prefixes (safe-get request :input-prefixes)
+        data-extensions (safe-get request :data-extensions)
+        first-extensions (map first data-extensions)
+        zipped (map vector input-prefixes data-extensions)
+        input-paths (for [[prefix ext] zipped] (str prefix ext))]
+    [(assoc request :input-paths input-paths) nil]
+    )) ; TODO have file formatter intelligently choose format
 
 (defn safe-open-json [filename]
   "open and load a json file, or return an error if an exception occurs"
@@ -91,7 +143,7 @@
 (defn read-data [request]
   "locate and read data definitions from data folder"
   (let [parent-ids (safe-get request :parent-ids)
-        directory (safe-get request :directory)
+        directory (safe-get request :directory) ; TODO fix, this is the wrong directory
         data-with-errors (map (partial read-datum directory) parent-ids)
         final-error (apply (partial utils/combine-errors nil) data-with-errors)
         data (map first data-with-errors)]
@@ -126,6 +178,15 @@
   "creates the paths for the output of a transform"
   (for [i (range output-num)] (path-join directory (str (to-datum-id transform-id i) data-extension))))
 
+(defn generate-output-paths [request]
+  "generate output paths and add to request"
+  (let [transform (safe-get request :transform)
+        output-num (count (safe-get transform :output))
+        transform-id (safe-get request :transform-id)
+        directory (safe-get request :directory)
+        output-paths (to-output-paths directory transform-id output-num)]
+    [(assoc request :output-paths output-paths) nil]))
+
 (defn call-transform [transform-path parameters input-paths output-paths model-path train-mode random-seed]
   "calls the transform file to perform the transform"
   (let [input-map (merge parameters {:input input-paths :output output-paths :model model-path :trainmode train-mode :seed random-seed})]
@@ -135,16 +196,15 @@
   "process the data into a transform and make the necessary calls"
   (let [transform-id (safe-get request :transform-id)
         transform-name (safe-get request :TransformName)
+        transform-path (path-join transform-folder transform-name)
         transform (safe-get request :transform)
         data-namespace (safe-get request :DataNamespace)
         parameters (safe-get request :parameters)
         data (safe-get request :data)
         train-mode (train-mode? data-namespace)
-        transform-path (path-join transform-folder transform-name)
-        output-num (count (transform :output))
         input-paths (map :full-path data)
         directory (safe-get request :directory)
-        output-paths (to-output-paths directory transform-id output-num)
+        output-paths (safe-get request :output-paths)
         model-path (path-join directory (str transform-id model-extension))
         random-seed (safe-get request :random-seed)]
     (call-transform transform-path parameters input-paths output-paths model-path train-mode random-seed)
