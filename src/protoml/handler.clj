@@ -34,8 +34,6 @@
                     validate/input-definitions
                     io/generate-input-extensions
                     io/generate-input-paths
-                    utils/debug-request
-                    utils/return-error
                     validate/input-paths
                     io/read-data
                     validate/data-definition
@@ -55,12 +53,15 @@
                     validate/no-nil
                     validate/new-transform-types
                     utils/return-error
-                    ; check point
+                    ; check point!!!!
+                    utils/debug-request
+                    utils/return-error
                     io/process-transform
                     ; post-processing
                     io/make-output-immutable
                     io/write-output-definition
                     )) ; TODO log results/errors in elastic search
+                    ; TODO if error, also log original request
 
 (defroutes app-routes
   (GET "/" [] (tutorial))

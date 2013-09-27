@@ -1,6 +1,7 @@
 (ns protoml.validate
   (:use compojure.core
-        [clojure.contrib.map-utils :only [safe-get]]))
+        [clojure.contrib.map-utils :only [safe-get]])
+  (:require [me.raynes.fs :as fs]))
 
 (defn request-fields [request]
   "if the request for a new transform is invalid, returns an error"
@@ -64,8 +65,10 @@
 
 (defn input-directories [request]
   "validate that all input data directories exist"
-  ; TODO
-  [request nil])
+  (let [parent-directories (safe-get request :parent-directories)
+        valid (every? true? (map fs/directory? parent-directories))]
+    (if valid [request nil]
+      [nil "Invalid input data directory"])))
 
 (defn input-definitions [request]
   "validate that all input data definitions exist"

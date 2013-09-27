@@ -131,20 +131,16 @@
     [(assoc request :input-paths input-paths) nil]
     )) ; TODO have file formatter intelligently choose format
 
-(defn safe-open-json [filename]
-  "open and load a json file, or return an error if an exception occurs"
-  (utils/exception-to-error #(parse/from-json (slurp %)) filename))
-
-(defn read-datum [directory parent-id]
+(defn read-datum [data-file]
   "locate and read datum's information into a map"
-  (let [data-file (path-join directory (str parent-id data-extension))]
-    (safe-open-json data-file)))
+  (utils/err->> data-file
+                safe-slurp
+                parse/safe-from-json))
 
 (defn read-data [request]
   "locate and read data definitions from data folder"
-  (let [parent-ids (safe-get request :parent-ids)
-        directory (safe-get request :directory) ; TODO fix, this is the wrong directory
-        data-with-errors (map (partial read-datum directory) parent-ids)
+  (let [input-definitions (safe-get request :input-definitions)
+        data-with-errors (map read-datum input-definitions)
         final-error (apply (partial utils/combine-errors nil) data-with-errors)
         data (map first data-with-errors)]
     (if (nil? (second final-error)) [(assoc request :data data) nil]
@@ -181,7 +177,7 @@
 (defn generate-output-paths [request]
   "generate output paths and add to request"
   (let [transform (safe-get request :transform)
-        output-num (count (safe-get transform :output))
+        output-num (count (safe-get transform :Output))
         transform-id (safe-get request :transform-id)
         directory (safe-get request :directory)
         output-paths (to-output-paths directory transform-id output-num)]

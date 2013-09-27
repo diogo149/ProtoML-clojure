@@ -16,3 +16,9 @@
     (is (= (count input) 2))
     (is (nil? error))
     value))
+
+(defn test-exception [f & args]
+  "checks that a function throws an exception with certain arguments"
+  (is (try (let [_ (apply f args)]
+         false)
+        (catch Throwable e true))))
