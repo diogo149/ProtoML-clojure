@@ -34,9 +34,9 @@
             T (rest curr)
             param (first H)
             value (second H)
-            to-arg (fn [v] (str "--" param "=" v))]
+            to-arg (fn [v] (str "--" (name param) "=" v))]
         (if (coll? value) (recur T (concat acc (map to-arg value)))
-          (recur T (conj acc (to-arg value))))))))
+          (recur T (concat acc [(to-arg value)])))))))
 
 (defn make-read-only [filename]
   "changes file permissions of input file to be read only"

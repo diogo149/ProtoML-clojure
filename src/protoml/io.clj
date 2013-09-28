@@ -131,16 +131,16 @@
     [(assoc request :input-paths input-paths) nil]
     )) ; TODO have file formatter intelligently choose format
 
-(defn read-datum [data-file]
-  "locate and read datum's information into a map"
-  (utils/err->> data-file
+(defn safe-open-json [filename]
+  "open and parse json"
+  (utils/err->> filename
                 safe-slurp
                 parse/safe-from-json))
 
 (defn read-data [request]
   "locate and read data definitions from data folder"
   (let [input-definitions (safe-get request :input-definitions)
-        data-with-errors (map read-datum input-definitions)
+        data-with-errors (map safe-open-json input-definitions)
         final-error (apply (partial utils/combine-errors nil) data-with-errors)
         data (map first data-with-errors)]
     (if (nil? (second final-error)) [(assoc request :data data) nil]
@@ -163,7 +163,7 @@
 (defn read-random-seed [request]
   "read random seed, if available, else generate one"
   (let [transform-id (safe-get request :transform-id)
-        random-seed (get request :RandomSeed (hash transform-id))]
+        random-seed (get request :RandomSeed (Math/abs (hash transform-id)))]
     [(assoc request :random-seed random-seed) nil]))
 
 (defn train-mode? [data-namespace]
@@ -183,28 +183,50 @@
         output-paths (to-output-paths directory transform-id output-num)]
     [(assoc request :output-paths output-paths) nil]))
 
+(defn generate-transform-path [request]
+  "add the path to the executable transform to the request"
+  (let [transform-name (safe-get request :TransformName)
+        transform-path (path-join transform-folder transform-name)]
+    [(assoc request :transform-path transform-path) nil]))
+
+(defn generate-model-path [request]
+  "add the path where the serialized model should go"
+  (let [directory (safe-get request :directory)
+        transform-id (safe-get request :transform-id)
+        model-file (str transform-id model-extension)
+        model-path (path-join directory model-file)]
+    [(assoc request :model-path model-path)]))
+
+(defn generate-train-mode [request]
+  "add a flag indicating whether or not train mode is active"
+  (let [data-namespace (safe-get request :DataNamespace)
+        train-mode (train-mode? data-namespace)]
+    [(assoc request :train-mode train-mode)]))
+
 (defn call-transform [transform-path parameters input-paths output-paths model-path train-mode random-seed]
   "calls the transform file to perform the transform"
-  (let [input-map (merge parameters {:input input-paths :output output-paths :model model-path :trainmode train-mode :seed random-seed})]
+  (let [input-map (merge {:input input-paths :output output-paths :model model-path :trainmode train-mode :seed random-seed} parameters)]
     (shell/generic-call transform-path input-map)))
 
 (defn process-transform [request]
   "process the data into a transform and make the necessary calls"
-  (let [transform-id (safe-get request :transform-id)
-        transform-name (safe-get request :TransformName)
-        transform-path (path-join transform-folder transform-name)
-        transform (safe-get request :transform)
-        data-namespace (safe-get request :DataNamespace)
+  (let [transform-path (safe-get request :transform-path)
         parameters (safe-get request :parameters)
-        data (safe-get request :data)
-        train-mode (train-mode? data-namespace)
-        input-paths (map :full-path data)
-        directory (safe-get request :directory)
+        input-paths (safe-get request :input-paths)
         output-paths (safe-get request :output-paths)
-        model-path (path-join directory (str transform-id model-extension))
-        random-seed (safe-get request :random-seed)]
-    (call-transform transform-path parameters input-paths output-paths model-path train-mode random-seed)
-    )) ; TODO add creation of these to another node in the pipeline
+        model-path (safe-get request :model-path)
+        transform (safe-get request :transform)
+        train-mode (safe-get request :train-mode)
+        random-seed (safe-get request :random-seed)
+        [transform-output error] (call-transform transform-path
+                                                 parameters
+                                                 input-paths
+                                                 output-paths
+                                                 model-path
+                                                 train-mode
+                                                 random-seed)]
+    (if (nil? error) [(assoc request :transform-output transform-output) nil]
+      [nil error])))
 
 (defn make-output-immutable [request]
   "makes the output of a transform immutable (read only)"

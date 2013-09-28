@@ -11,12 +11,16 @@ For testing client:
     $ cd sample
     $ curl -XPOST localhost:3000/new-transform -d @sample-request.txt
 
+Unfinished
+==========
+*Validation
+*Auto file formatter
+
 General TODOs
 =============
 * tests
 * fill in sample files
 * make transforms
-* find out how to do io tests easily?
 
 Notes
 =====

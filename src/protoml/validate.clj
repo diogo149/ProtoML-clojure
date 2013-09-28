@@ -84,3 +84,13 @@
   "validate that all input data paths exist"
   ; TODO
   [request nil])
+
+(defn transform-path [request]
+  "validate that the transform path exists and is executable"
+  ; TODO
+  [request nil])
+
+(defn random-seed [request]
+  "validate that the random seed is made up only of digits (positive integer)"
+  ; TODO
+  [request nil])
