@@ -1,6 +1,6 @@
 {
-    "Documentation": "this is a sample transform, it doesn't really do anything",
+    "Documentation": "this is a sample transform, it doubles the values in an input csv",
     "Parameters": [],
-    "Input": [],
-    "Output": [{"extension": ".vw", "type": ""}]
+    "Input": [{"Extension": ".csv", "Type": "numerical", "NCols": -1}],
+    "Output": [{"Extension": ".csv", "Type": "numerical", "NCols": -1}]
 }

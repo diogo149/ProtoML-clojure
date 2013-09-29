@@ -1,5 +1,21 @@
 #!/bin/env python
 
-import sys
+from python_transform_parser import parse
 
-print(sys.argv + [1, 2, 3])
+if __name__ == "__main__":
+    parsed = parse()
+    infile = parsed["input"][0]
+    outfile = parsed["output"][0]
+
+    with open(parsed["model"], 'a') as model:
+        # transform must write model!
+        model.write('')
+
+    with open(infile) as inf:
+        with open(outfile, 'w') as outf:
+            for line in inf:
+                nums = [float(x) for x in line.split(',')]
+                transformed = [2 * x for x in nums]
+                newline = ",".join(map(str, transformed))
+                outf.write(newline)
+                outf.write('\n')

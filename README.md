@@ -9,21 +9,20 @@ For testing server:
 
 For testing client:
     $ cd sample
-    $ curl -XPOST localhost:3000/new-transform -d @sample-request.txt
+    $ curl -XPOST localhost:3000/manual-input -d @sample-manual-input.txt
+    $ curl -XPOST localhost:3000/new-transform -d @sample-new-transform.txt
 
 Unfinished
 ==========
-*Validation
-*Auto file formatter
-*Input data
-*Package transform (for metatransforms)
+* Validation
+* Auto file formatter
+* Transform package/partial application (for metatransforms)
 
 General TODOs
 =============
-* tests
-* fill in sample files
-* make transforms
-* split io file into io and pipeline
+* More tests
+* Make transforms
+* Split io file into io, new_transform, and manual_input
 
 Notes
 =====
@@ -39,7 +38,7 @@ Required fields
     * Type
     * Extension (including the period)
     * NCols (have -1 for any, 0 for none, positive number for a specific number)
-* Output
+* Output Array/list of:
     * Type
     * Extension (including the period)
     * NCols (have -1 for not specified, 0 for none, positive number for a specific number)

@@ -54,6 +54,7 @@
           io/generate-output-num
           io/generate-output-prefixes
           io/generate-output-extensions
+          utils/debug-request
           io/generate-output-paths
           io/generate-output-definitions
           io/generate-output-definitions-content
@@ -71,7 +72,6 @@
           io/process-transform
           validate/output-paths
           ; post-processing
-          ; check point!!!!
           io/make-model-immutable
           io/make-output-immutable
           io/write-output-definitions

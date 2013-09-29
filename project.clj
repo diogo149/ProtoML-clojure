@@ -9,7 +9,7 @@
                  [org.clojure/tools.logging "0.2.6"]
                  [compojure "1.1.5"]
                  ; [ring-json-params "0.1.3"]
-                 [clj-logging-config "1.9.10"]
+                 ; [clj-logging-config "1.9.10"] this package messes up logging
                  [me.raynes/fs "1.4.4"]
                  [digest "1.4.3"]]
   :plugins [[lein-ring "0.8.5"]]

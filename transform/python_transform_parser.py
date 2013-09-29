@@ -3,10 +3,19 @@ from re import findall
 
 def parse():
     parsed = {}
-    for args in argv[1:]:
-        key, value = re.findall("^--(.*)=(.*)$")[0]
+    inputs = []
+    outputs = []
+    for arg in argv[1:]:
+        key, value = findall("^--(.*)=(.*)$", arg)[0]
         value = parse_value(value)
-        parsed[key] = value
+        if key == "input":
+            inputs.append(value)
+        elif key == "output":
+            outputs.append(value)
+        else:
+            parsed[key] = value
+    parsed["input"] = inputs
+    parsed["output"] = outputs
     return parsed
 
 

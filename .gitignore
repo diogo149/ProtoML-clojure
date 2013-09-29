@@ -12,3 +12,7 @@ pom.xml
 .lein-env
 .lein-repl-history
 .nrepl-port
+
+# python files
+__pycache__/
+*.pyc

@@ -120,12 +120,9 @@
   "returns a collection of extensions available for a certain data-id"
   (let [files (fs/list-dir directory)]
     (if (nil? files) (throw (Exception. "Invalid directory to extract data extensions from"))
-      (let [pattern-str (str "^" data-id "(\\..*)$")
-        pattern (re-pattern pattern-str)
-        mapped (map #(re-find pattern %) files)
-        matches (filter (complement nil?) mapped)
-        extensions (map second matches)
-        data-extensions (filter #(not= % data-extension))]
+      (let [extensions (map fs/extension files)
+            non-nil (filter (complement nil?) extensions)
+            data-extensions (filter #(not= % data-extension) non-nil)]
         data-extensions))))
 
 (defn generate-input-extensions [request]
@@ -142,7 +139,7 @@
   (let [input-prefixes (safe-get request :input-prefixes)
         data-extensions (safe-get request :data-extensions)
         first-extensions (map first data-extensions)
-        zipped (map vector input-prefixes data-extensions)
+        zipped (map vector input-prefixes first-extensions)
         input-paths (for [[prefix ext] zipped] (str prefix ext))]
     [(assoc request :input-paths input-paths) nil]
     )) ; TODO have file formatter intelligently choose format
@@ -212,7 +209,7 @@
 (defn generate-output-extensions [request]
   (let [transform (safe-get request :transform)
         output (safe-get transform :Output)
-        output-extensions (map #(safe-get % :extension) output)]
+        output-extensions (map #(safe-get % :Extension) output)]
     [(assoc request :output-extensions output-extensions) nil]))
 
 (defn generate-output-paths [request]
@@ -305,7 +302,7 @@
         errors (doall
                  (for [[output-definition output-definition-content] zipped]
                    (safe-write-json output-definition output-definition-content)
-             ))]
+                   ))]
     (utils/combine-errors request errors)))
 
 (defn manual-generate-extension [request]

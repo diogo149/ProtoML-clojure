@@ -2,7 +2,8 @@
   (:use clojure.test
         protoml.io
         protoml.test.test-utils)
-  (:require [clj-logging-config.log4j :as log-config]))
+  ; (:require [clj-logging-config.log4j :as log-config])
+  )
 
 ; silence logging
 ; (log-config/set-logger! :pattern "")
@@ -92,8 +93,8 @@
   (testing "valid input"
     (doall
       (for [[output output-extensions] [[[] []]
-                                        [[{:extension "vw"}] ["vw"]]
-                                        [[{:extension "vw"} {:extension "csv"}] ["vw" "csv"]]]]
+                                        [[{:Extension "vw"}] ["vw"]]
+                                        [[{:Extension "vw"} {:Extension "csv"}] ["vw" "csv"]]]]
         (let [request {:transform {:Output output}}
               desired-output (assoc request :output-extensions output-extensions)]
           (is (= (test-non-error (generate-output-extensions request))
