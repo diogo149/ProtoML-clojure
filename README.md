@@ -12,22 +12,19 @@ For testing client:
     $ curl -XPOST localhost:3000/manual-input -d @sample-manual-input.txt
     $ curl -XPOST localhost:3000/new-transform -d @sample-new-transform.txt
 
-Unfinished
+To Do List
 ==========
+* More tests
+* Make transforms
+* Command line client
 * Validation
 * Auto file formatter
 * Transform package/partial application (for metatransforms)
 
-General TODOs
-=============
-* More tests
-* Make transforms
-* Split io file into io, new_transform, and manual_input
-
 Notes
 =====
-*Items in a request cannot contain an ampersand (&).
-*Transform parameters should not contain an equal sign (=).
+* Items in a request cannot contain an ampersand (&).
+* Transform parameters should not contain an equal sign (=).
 
 Transform Definition
 ====================

@@ -1,7 +1,3 @@
-(comment
-  this file is separated out to make it easy to change the underlying layer (to hadoop, for instance)
-  )
-
 (ns protoml.shell
   (:use compojure.core
         [clojure.java.shell :only [sh]]
@@ -25,18 +21,6 @@
 (defn mkdir-p [directory-path]
   "makes a directory and it's parents, input should be a directory"
   (check-sh "mkdir" "-p" directory-path))
-
-(defn generic-call [executable input-map]
-  "calls an executable, transforming input-map into command line arguments"
-  (loop [curr input-map acc [executable]]
-    (if (empty? curr) (apply check-sh acc)
-      (let [H (first curr)
-            T (rest curr)
-            param (first H)
-            value (second H)
-            to-arg (fn [v] (str "--" (name param) "=" v))]
-        (if (coll? value) (recur T (concat acc (map to-arg value)))
-          (recur T (concat acc [(to-arg value)])))))))
 
 (defn make-read-only [filename]
   "changes file permissions of input file to be read only"

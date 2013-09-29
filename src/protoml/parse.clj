@@ -34,10 +34,3 @@
   "tries to parse an input string as json"
   (try (from-json value)
     (catch Throwable e value)))
-
-(defn parse-request [request]
-  "takes in a request and returns a new request with the values parsed"
-  (let [parsed (for [[k v] request] [k (parse-rest v)])]
-    [(->> parsed
-         (apply concat)
-         (apply sorted-map)) nil]))

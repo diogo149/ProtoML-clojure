@@ -6,7 +6,10 @@
             [protoml.parse :as parse]
             [protoml.io :as io]
             [protoml.parse :as parse]
-            [protoml.utils :as utils]))
+            [protoml.utils :as utils]
+            [protoml.pipeline :as pipeline]
+            [protoml.new-transform]
+            [protoml.manual-input]))
 
 (defn tutorial []
   "display a tutorial of how to use ProtoML"
@@ -23,59 +26,59 @@
           request
           ; request pre-processing
           validate/request-fields
-          parse/parse-request
+          pipeline/parse-request
           validate/request-types
           validate/output-definitions
           ; transform
-          io/read-transform
+          pipeline/read-transform
           validate/transform-definition
-          io/generate-transform-path
+          pipeline/append-transform-path
           validate/transform-path
           ; input data
-          io/generate-data-parent-ids
-          io/generate-parent-directories
+          pipeline/append-parent-ids
+          pipeline/append-parent-directories
           validate/input-directories
-          io/generate-input-prefixes
-          io/generate-input-definitions
+          pipeline/append-input-prefixes
+          pipeline/append-input-definitions
           validate/input-definitions
-          io/generate-input-extensions
-          io/generate-input-paths
+          pipeline/append-input-extensions
+          pipeline/append-input-paths
           validate/input-paths
-          io/read-data
+          pipeline/read-data
           validate/data-definition
           ; transform parameters
-          io/read-parameters
+          pipeline/append-parameters
           validate/transform-parameters
           ; data-transform compatibility
           validate/type-check
           ; output
-          io/generate-transform-id
-          io/generate-directory
-          io/generate-output-num
-          io/generate-output-prefixes
-          io/generate-output-extensions
+          pipeline/append-transform-id
+          pipeline/append-directory
+          pipeline/append-output-num
+          pipeline/append-output-prefixes
+          pipeline/append-output-extensions
           utils/debug-request
-          io/generate-output-paths
-          io/generate-output-definitions
-          io/generate-output-definitions-content
+          pipeline/append-output-paths
+          pipeline/append-output-definitions
+          pipeline/append-output-definitions-content
           ; TODO validate/output-definitions-content
           ; misc parameters
-          io/read-random-seed
+          pipeline/append-random-seed
           validate/random-seed
-          io/generate-model-path
-          io/generate-train-mode
+          pipeline/append-model-path
+          pipeline/append-train-mode
           ; create directory: this should be last so it isn't created if the request fails earlier
-          io/create-directory
+          pipeline/create-directory
           ; performing the operation
           validate/no-nil
           validate/new-transform-types
-          io/process-transform
+          protoml.new-transform/process-transform
           validate/output-paths
           ; post-processing
-          io/make-model-immutable
-          io/make-output-immutable
-          io/write-output-definitions
-          ; TODO io/make-output-definitions-immutable
+          pipeline/make-model-immutable
+          pipeline/make-output-immutable
+          pipeline/write-output-definitions
+          pipeline/make-output-definitions-immutable
           validate/output-definitions
           )
         output-map (if (nil? error) result
@@ -92,32 +95,32 @@
           request
           ; request pre-processing
           validate/manual-request-fields
-          parse/parse-request
+          pipeline/parse-request
           ; TODO validation/manual-request-types
           ; TODO validation/data-type
           ; TODO validation/filepath
-          io/manual-generate-extension
+          protoml.manual-input/manual-determine-extension
           ; output
-          io/generate-transform-id
-          io/generate-directory
-          (partial io/set-output-num 1)
-          io/generate-output-prefixes
-          io/manual-output-extension
-          io/generate-output-paths
-          io/generate-output-definitions
-          io/manual-output-definitions-content
+          pipeline/append-transform-id
+          pipeline/append-directory
+          (partial pipeline/add-key :output-num 1)
+          pipeline/append-output-prefixes
+          protoml.manual-input/manual-output-extension
+          pipeline/append-output-paths
+          pipeline/append-output-definitions
+          protoml.manual-input/manual-output-definitions-content
           ; TODO validate/output-definitions-content
           ; create directory: this should be last so it isn't created if the request fails earlier
-          io/create-directory
+          pipeline/create-directory
           ; perform the operation
           validate/no-nil
           ; TODO validate/manual-input-types
-          io/process-manual-input
+          protoml.manual-input/process-manual-input
           validate/output-paths
           ; post-processing
-          io/make-output-immutable
-          io/write-output-definitions
-          ; TODO io/make-output-definitions-immutable
+          pipeline/make-output-immutable
+          pipeline/write-output-definitions
+          pipeline/make-output-definitions-immutable
           validate/output-definitions
           )
         output-map (if (nil? error) result
