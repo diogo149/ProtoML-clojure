@@ -1,3 +1,6 @@
 {
-    "Output": []
+    "Documentation": "this is a sample transform, it doesn't really do anything",
+    "Parameters": [],
+    "Input": [],
+    "Output": [{"extension": ".vw", "type": ""}]
 }

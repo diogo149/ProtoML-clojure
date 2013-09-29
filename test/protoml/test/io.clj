@@ -1,7 +1,11 @@
 (ns protoml.test.io
   (:use clojure.test
         protoml.io
-        protoml.test.test-utils))
+        protoml.test.test-utils)
+  (:require [clj-logging-config.log4j :as log-config]))
+
+; silence logging
+; (log-config/set-logger! :pattern "")
 
 (def md5-1 "99914b932bd37a50b983c5e7c90ae93b")
 (def md5-2 "3fba38625fe2c5345bb68671cea9d91e")
@@ -82,4 +86,16 @@
   (testing "valid file"
     (is (= (test-non-error (safe-slurp "README.md"))
            (slurp "README.md")))
+    ))
+
+(deftest test-generate-output-extensions
+  (testing "valid input"
+    (doall
+      (for [[output output-extensions] [[[] []]
+                                        [[{:extension "vw"}] ["vw"]]
+                                        [[{:extension "vw"} {:extension "csv"}] ["vw" "csv"]]]]
+        (let [request {:transform {:Output output}}
+              desired-output (assoc request :output-extensions output-extensions)]
+          (is (= (test-non-error (generate-output-extensions request))
+                 desired-output)))))
     ))

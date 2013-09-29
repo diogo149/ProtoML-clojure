@@ -5,7 +5,14 @@
 
 (defn request-fields [request]
   "if the request for a new transform is invalid, returns an error"
-  (if (every? #(contains? request %) [:TransformName :DataNamespace :JsonParameters :Data :Tags]) [request nil]
+  (if (every? #(contains? request %) [:TransformName :DataNamespace :JsonParameters :Data])
+    [request nil]
+    [nil "Missing parameters in transform request"]))
+
+(defn manual-request-fields [request]
+  "if the request for a new transform is invalid, returns an error"
+  (if (every? #(contains? request %) [:Type :Filepath :NCols])
+    [request nil]
     [nil "Missing parameters in transform request"]))
 
 (defn request-types [request]
@@ -43,14 +50,6 @@
   (let [data (safe-get request :data)]
     (if (every? true? (map datum-definition data)) [request nil]
       [nil "Invalid input data definition"])))
-
-(defn data-compatibility [request]
-  "if the input data is incompatible, returns an error"
-  (let [data (safe-get request :data)
-        rows (map #(safe-get % :NRows) data)
-        zero-rows (= 0 (count rows))]
-    (if (or zero-rows (apply = (map :NRows data))) [request nil]
-      [nil "Incompatible data"])))
 
 (defn no-nil [input-map]
   "if the input-map has nil values, returns an error"
@@ -93,4 +92,14 @@
 (defn random-seed [request]
   "validate that the random seed is made up only of digits (positive integer)"
   ; TODO
+  [request nil])
+
+(defn output-paths [request]
+  "validate that the output paths all exist"
+  ; TODO
+  [request nil])
+
+(defn output-definitions [request]
+  "validate that the output definitions have the necessary fields"
+  ; TODO :extension
   [request nil])

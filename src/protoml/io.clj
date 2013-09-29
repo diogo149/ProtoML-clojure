@@ -7,7 +7,8 @@
             [protoml.shell :as shell]
             [protoml.parse :as parse]
             [protoml.utils :as utils]
-            [me.raynes.fs :as fs]))
+            [me.raynes.fs :as fs]
+            [protoml.core :as core]))
 
 (def data-extension ".pml-data")
 (def model-extension ".pml-model")
@@ -20,6 +21,21 @@
 (defn safe-slurp [filename]
   "tries to slurp, and if this fails, returns an error"
   (utils/exception-to-error slurp filename))
+
+(defn safe-spit [filename string]
+  (utils/exception-to-error spit filename string))
+
+(defn safe-open-json [filename]
+  "open and parse json"
+  (utils/err->> filename
+                safe-slurp
+                parse/safe-from-json))
+
+(defn safe-write-json [filename object]
+  "convert to json and write to file"
+  (utils/err->> object
+                parse/safe-to-json
+                (partial safe-spit filename)))
 
 (def CONFIG-FILE "ProtoML_config.json")
 (def CONFIG (try (parse/from-json (slurp CONFIG-FILE)) (catch Throwable e {}))) ; defaults to empty map if file is not found
@@ -131,12 +147,6 @@
     [(assoc request :input-paths input-paths) nil]
     )) ; TODO have file formatter intelligently choose format
 
-(defn safe-open-json [filename]
-  "open and parse json"
-  (utils/err->> filename
-                safe-slurp
-                parse/safe-from-json))
-
 (defn read-data [request]
   "locate and read data definitions from data folder"
   (let [input-definitions (safe-get request :input-definitions)
@@ -153,7 +163,7 @@
         full-path (path-join transform-folder transform-file)
         [transform error] (safe-open-json full-path)]
     (if (nil? error) [(assoc request :transform transform)]
-      [nil error]))) ; TODO recursive transform look up (for templates
+      [nil error])))
 
 (defn read-parameters [request]
   "read parameters from json string"
@@ -170,18 +180,65 @@
   "determines whether or not a namespace is for training"
   (= train-namespace data-namespace))
 
-(defn to-output-paths [directory transform-id output-num]
-  "creates the paths for the output of a transform"
-  (for [i (range output-num)] (path-join directory (str (to-datum-id transform-id i) data-extension))))
+(defn to-output-prefixes [directory transform-id output-num]
+  "creates the prefixes for the output of a transform"
+  (for [i (range 1 (inc output-num))]
+    (path-join directory (to-datum-id transform-id i))))
 
-(defn generate-output-paths [request]
-  "generate output paths and add to request"
+(defn set-output-num [output-num request]
+  "manual set the number of outputs"
+  [(assoc request :output-num output-num) nil])
+
+(defn generate-output-num [request]
+  "generate number of outputs"
   (let [transform (safe-get request :transform)
-        output-num (count (safe-get transform :Output))
+        output-num (count (safe-get transform :Output))]
+    [(assoc request :output-num output-num) nil]))
+
+(defn generate-output-prefixes [request]
+  "generate output prefixes and add to request"
+  (let [output-num (safe-get request :output-num)
         transform-id (safe-get request :transform-id)
         directory (safe-get request :directory)
-        output-paths (to-output-paths directory transform-id output-num)]
+        output-prefixes (to-output-prefixes directory transform-id output-num)]
+    [(assoc request :output-prefixes output-prefixes) nil]))
+
+(defn manual-output-extension [request]
+  "set the output extension for manual input"
+  (let [extension (safe-get request :extension)
+        output-extensions [extension]]
+    [(assoc request :output-extensions output-extensions) nil]))
+
+(defn generate-output-extensions [request]
+  (let [transform (safe-get request :transform)
+        output (safe-get transform :Output)
+        output-extensions (map #(safe-get % :extension) output)]
+    [(assoc request :output-extensions output-extensions) nil]))
+
+(defn generate-output-paths [request]
+  (let [output-prefixes (safe-get request :output-prefixes)
+        output-extensions (safe-get request :output-extensions)
+        output-paths (map #(apply str %) (map vector
+                                              output-prefixes
+                                              output-extensions))]
     [(assoc request :output-paths output-paths) nil]))
+
+(defn generate-output-definitions [request]
+  (let [output-prefixes (safe-get request :output-prefixes)
+        output-definitions (map #(str % data-extension) output-prefixes)]
+    [(assoc request :output-definitions output-definitions) nil]))
+
+(defn generate-output-definitions-content [request]
+  (let [transform (safe-get request :transform)
+        output-definitions-content (safe-get transform :Output)]
+    [(assoc request :output-definitions-content output-definitions-content) nil]))
+
+(defn manual-output-definitions-content [request]
+  (let [NCols (safe-get request :NCols)
+        Extension (safe-get request :extension)
+        Type (safe-get request :Type)
+        output-definitions-content [{:Type Type :Ncols NCols :Extension Extension}]]
+    [(assoc request :output-definitions-content output-definitions-content) nil]))
 
 (defn generate-transform-path [request]
   "add the path to the executable transform to the request"
@@ -230,14 +287,38 @@
 
 (defn make-output-immutable [request]
   "makes the output of a transform immutable (read only)"
-  (let [model-path (safe-get request :model-path)
-        output-paths (safe-get request :output-paths)]
-    (utils/combine-errors request (map shell/make-read-only (conj output-paths model-path)))))
+  (let [output-paths (safe-get request :output-paths)]
+    (utils/combine-errors request (map shell/make-read-only output-paths))))
 
-(defn write-output-definition [request]
+(defn make-model-immutable [request]
+  "makes the model of a transform immutable (read only)"
+  (let [model-path (safe-get request :model-path)
+        [_ error] (shell/make-read-only model-path)]
+    (if (nil? error) [request nil]
+      [nil error])))
+
+(defn write-output-definitions [request]
   "writes the json files for the output data"
-  (let [output-paths (safe-get request :output-paths)
-        transform (safe-get request :transform)
-        output-def (safe-get transform :Output)
-        directory (safe-get request :directory)])
-  [request nil])
+  (let [output-definitions (safe-get request :output-definitions)
+        output-definitions-content (safe-get request :output-definitions-content)
+        zipped (map vector output-definitions output-definitions-content)
+        errors (doall
+                 (for [[output-definition output-definition-content] zipped]
+                   (safe-write-json output-definition output-definition-content)
+             ))]
+    (utils/combine-errors request errors)))
+
+(defn manual-generate-extension [request]
+  "parse the extension from the given filepath"
+  (let [filepath (safe-get request :Filepath)
+        extension (fs/extension filepath)]
+    (if (nil? extension) [nil "Filepath has no extension"]
+      [(assoc request :extension extension) nil])))
+
+(defn process-manual-input [request]
+  "process the manual input by copying the file at the given filepath to the proper location in the data folder"
+  (let [filepath (safe-get request :Filepath)
+        [output-path] (safe-get request :output-paths)
+        [_ error] (utils/exception-to-error fs/copy filepath output-path)]
+    (if (nil? error) [request error]
+      [nil error])))

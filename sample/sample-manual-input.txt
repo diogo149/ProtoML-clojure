@@ -1,0 +1,1 @@
+Type=categorical&Filepath=sample/sample.csv&NCols=-1
