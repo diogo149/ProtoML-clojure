@@ -4,17 +4,17 @@ ProtoML-clojure
 clojure implementation of ProtoML's ideas - for fun!
 
 For testing server:
-    $ cd sample
-    $ lein ring server
+> cd sample
+> lein ring server
 
 For testing client:
-    $ cd sample
-    $ curl -XPOST localhost:3000/manual-input -d @sample-manual-input.txt
-    $ curl -XPOST localhost:3000/new-transform -d @sample-new-transform.txt
+> cd sample
+> curl -XPOST localhost:3000/manual-input -d @sample-manual-input.txt
+> curl -XPOST localhost:3000/new-transform -d @sample-new-transform.txt
 
 For testing ElasticSearch:
-    $ curl -XGET 'http://localhost:9200/protoml/new-transform/_search?pretty=true'
-    $ curl -XGET 'http://localhost:9200/protoml/new-transform/_search?q=model-path:data&pretty=true'
+> curl -XGET 'http://localhost:9200/protoml/new-transform/_search?pretty=true'
+> curl -XGET 'http://localhost:9200/protoml/new-transform/_search?q=model-path:data&pretty=true'
 
 To Do List
 ==========
