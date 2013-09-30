@@ -16,3 +16,16 @@
   (let [result (esd/create "protoml" "new-transform" document)]
     (info "Output protoml.elastic-search/create-new-transform: " result)
     result))
+
+(defn extract-source [results]
+  "extracts a list of source documents from search results"
+  (if (results :timed_out) [nil "Unable to extract documents, searching timed out"]
+    [(->> results
+         :hits
+         :hits
+         (map #(% :_source))) nil]))
+
+(defn search-new-transform [key value]
+  "searches the new-transform output for a value in a key"
+  (let [results (esd/search "protoml" "new-transform" :query (q/term key value))]
+    (extract-source results)))
