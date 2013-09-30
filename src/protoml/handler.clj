@@ -8,6 +8,7 @@
             [protoml.parse :as parse]
             [protoml.utils :as utils]
             [protoml.pipeline :as pipeline]
+            [protoml.elastic-search :as es]
             [protoml.new-transform]
             [protoml.manual-input]))
 
@@ -57,7 +58,6 @@
           pipeline/append-output-num
           pipeline/append-output-prefixes
           pipeline/append-output-extensions
-          utils/debug-request
           pipeline/append-output-paths
           pipeline/append-output-definitions
           pipeline/append-output-definitions-content
@@ -83,8 +83,8 @@
           )
         output-map (if (nil? error) result
                      (assoc request :error error))]
-    ; TODO log in elastic search
-    ; (Thread/sleep 20000)
+    (when (nil? error)
+      (es/create-new-transform output-map)) ; this causes errors when there's a hash collision (?)
     (parse/to-json output-map)
     ))
 

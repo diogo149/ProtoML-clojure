@@ -12,5 +12,6 @@
 (def hadoop-mode (CONFIG :HadoopMode false))
 (def directory-depth (CONFIG :DirectoryDepth 5))
 (def chars-per-directory-level (CONFIG :CharsPerDirectoryLevel 2))
+(def elastic-search-url (CONFIG :ElasticSearchUrl "http://127.0.0.1:9200"))
 (def data-folder (io/path-join root-directory "data"))
 (def transform-folder (io/path-join root-directory "transform"))

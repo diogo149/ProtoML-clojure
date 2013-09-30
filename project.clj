@@ -11,6 +11,7 @@
                  ; [ring-json-params "0.1.3"]
                  ; [clj-logging-config "1.9.10"] this package messes up logging
                  [me.raynes/fs "1.4.4"]
+                 [clojurewerkz/elastisch "1.3.0-beta3"]
                  [digest "1.4.3"]]
   :plugins [[lein-ring "0.8.5"]]
   :ring {:handler protoml.handler/app}

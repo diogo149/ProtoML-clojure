@@ -1,6 +1,5 @@
 (ns protoml.utils
-  (:use compojure.core
-        [clojure.tools.logging :only (info error)]
+  (:use [clojure.tools.logging :only (info error)]
         [clojure.stacktrace :as stacktrace]))
 
 ;unused

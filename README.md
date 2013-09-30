@@ -12,8 +12,13 @@ For testing client:
     $ curl -XPOST localhost:3000/manual-input -d @sample-manual-input.txt
     $ curl -XPOST localhost:3000/new-transform -d @sample-new-transform.txt
 
+For testing ElasticSearch:
+    $ curl -XGET 'http://localhost:9200/protoml/new-transform/_search?pretty=true'
+    $ curl -XGET 'http://localhost:9200/protoml/new-transform/_search?q=model-path:data&pretty=true'
+
 To Do List
 ==========
+* Elastic Search integration
 * More tests
 * Make transforms
 * Command line client
