@@ -129,12 +129,14 @@
     (parse/to-json output-map)
     ))
 
+; TODO make sure all routes return json
 (defroutes app-routes
   (GET "/" [] (tutorial))
   (GET "/summary" [] (summary))
   (POST "/new-transform" [& request] (new-transform request))
   (POST "/manual-input" [& request] (manual-input request))
-  (POST "/echo" [& request] (println "request: " request) (str request))
+  (POST "/echo" [& request] (println "request: " request) (parse/to-json request))
+  (POST "/new-node" [& request] (println "request: " request) (parse/to-json (assoc request :new-node true)))
   (route/resources "/")
   (route/not-found "Not Found"))
 

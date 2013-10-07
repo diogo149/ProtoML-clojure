@@ -51,3 +51,11 @@ Required fields
     * Type
     * Extension (including the period)
     * NCols (have -1 for not specified, 0 for none, positive number for a specific number)
+
+Client
+======
+Requirements
+* CPython 2.7
+* formcreator
+* Requests
+![New Node Operation Screenshot](https://github.com/diogo149/ProtoML-clojure/raw/master/screenshots/client_new_node.png "New Node Operation Screenshot")
