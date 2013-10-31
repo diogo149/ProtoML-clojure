@@ -4,6 +4,11 @@
             [protoml.config :as config]
             [me.raynes.fs :as fs]))
 
+(defn valid-random-seed? [v]
+  "whether or not a random seed it valid; not using integer? because some transforms may have constraints of positive 32 bit integers"
+  (and (integer? v)
+       (pos? v)
+       (< v 2e9)))
 
 (defn determine-transform-id [request]
   "determine transform id from hashing input request"

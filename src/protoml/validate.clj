@@ -3,6 +3,16 @@
         [clojure.contrib.map-utils :only [safe-get]])
   (:require [me.raynes.fs :as fs]))
 
+(defn strings? [v] (every? true? (map string? v)))
+
+(defn validate-input-fields [fields request]
+  "if the request for a new transform is invalid, returns an error"
+  (if (every? #(contains? request %) fields)
+    [request nil]
+    [nil "Missing parameters in transform request"]))
+
+; TODO remove below
+
 (defn request-fields [request]
   "if the request for a new transform is invalid, returns an error"
   (if (every? #(contains? request %) [:TransformName :DataNamespace :JsonParameters :Data])
